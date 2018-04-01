@@ -1,0 +1,113 @@
+MAIN ACTIVITY
+
+  SQLiteDatabase myDatabase;
+    EditText e1,e2;
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        myDatabase=openOrCreateDatabase("studentDB",MODE_PRIVATE,null);
+        myDatabase.execSQL("create table if not exists student(username varchar,password varchar);");
+
+        e1=(EditText)findViewById(R.id.nameEditText);
+        e2=(EditText)findViewById(R.id.passwordEditText);
+
+
+    }
+    public void myFunc(View v)
+    {
+        myDatabase.execSQL("insert into student values('"+e1.getText().toString()+"','"+e2.getText().toString()+"');");
+        Intent intent=new Intent(MainActivity.this,Main2Activity.class);
+        startActivity(intent);
+    }
+}
+
+
+activity.xml
+
+
+<EditText
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="enter your name"
+        android:id="@+id/nameEditText"
+        />
+
+    <EditText
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="enter your password"
+        android:layout_below="@id/nameEditText"
+        android:id="@+id/passwordEditText"/>
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:text="submit"
+        android:onClick="myFunc"
+        android:layout_below="@id/passwordEditText"/>
+
+MAIN2ACTIVITY CODE
+
+
+ SQLiteDatabase myDatabase;
+    List<String> student;
+    ListView listView;
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main2);
+        myDatabase=openOrCreateDatabase("studentDB",MODE_PRIVATE,null);
+        student=new ArrayList<>();
+        listView=(ListView)findViewById(R.id.listView);
+        myDatabase.execSQL("create table if not exists student(username varchar,password varchar);");
+        Cursor resultSet = myDatabase.rawQuery("Select * from student",null);
+        resultSet.moveToFirst();
+        int count=resultSet.getCount();
+        int i;
+        for(i=0;i<count;i++)
+        {
+            String tempName=resultSet.getString(0);
+            String tempPassword=resultSet.getString(1);
+            student.add(tempName+"\n"+tempPassword);
+
+            resultSet.moveToNext();
+        }
+        ArrayAdapter arrayAdapter=new ArrayAdapter(getApplicationContext(),android.R.layout.simple_list_item_1,student);
+        listView.setAdapter(arrayAdapter);
+        registerForContextMenu(listView);
+
+    }
+
+    @Override
+    public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
+        super.onCreateContextMenu(menu, v, menuInfo);
+        MenuInflater menuInflater=new MenuInflater(getApplicationContext());
+        menuInflater.inflate(R.menu.menu,menu);
+
+    }
+
+    @Override
+    public boolean onContextItemSelected(MenuItem item) {
+        if(item.getTitle().equals("delete"))
+        {
+            AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
+            int index = info.position;
+            String tempName=student.get(index).split("\n")[0];
+            myDatabase.execSQL("delete from student where username ='"+tempName+"';");
+            student.remove(index);
+            ArrayAdapter arrayAdapter=new ArrayAdapter(getApplicationContext(),android.R.layout.simple_list_item_1,student);
+            listView.setAdapter(arrayAdapter);
+            listView.invalidateViews();
+        }
+        return true;
+    }
+}
+
+
+MENU PART
+
+<item
+    android:id="@+id/delete"
+    android:title="delete"
+    ></item>
